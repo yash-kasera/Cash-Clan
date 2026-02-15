@@ -1,0 +1,38 @@
+﻿warning[unused_variable]: p1 is assigned a value, but never used
+   ΓöîΓöÇ src\server\StructureManager.luau:93:9
+   Γöé
+93 Γöé         local p1 = makePart(
+   Γöé               ^^
+
+warning[unused_variable]: p2 is assigned a value, but never used
+    ΓöîΓöÇ src\server\StructureManager.luau:101:9
+    Γöé
+101 Γöé         local p2 = makePart(
+    Γöé               ^^
+
+warning[unused_variable]: p is assigned a value, but never used
+    ΓöîΓöÇ src\server\StructureManager.luau:128:9
+    Γöé
+128 Γöé         local p = makePart(
+    Γöé               ^
+
+warning[unused_variable]: frond is assigned a value, but never used
+    ΓöîΓöÇ src\server\StructureManager.luau:147:9
+    Γöé
+147 Γöé         local frond = makePart(
+    Γöé               ^^^^^
+
+warning[empty_if]: empty if block
+    ΓöîΓöÇ src\server\TerrainGenerator.server.luau:132:5
+    Γöé  
+132 Γöé Γò¡                 if erosion > 0.5 then
+133 Γöé Γöé                     -- Only form mountains if erosion is high
+134 Γöé Γöé                 else
+135 Γöé Γöé                     biome = BiomeType.Plains
+136 Γöé Γöé                 end
+    Γöé Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ^
+
+Results:
+0 errors
+5 warnings
+0 parse errors
