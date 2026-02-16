@@ -12,14 +12,15 @@ BuyToolFunction.Parent = Remotes
 
 -- Tool Definitions (or load from config)
 local TOOLS = {
-	Pickaxe = { Price = 0, AssetId = 0 }, -- Placeholder ID or create locally
-	Axe = { Price = 0, AssetId = 0 },
-	Hoe = { Price = 0, AssetId = 0 },
-	Shovel = { Price = 0, AssetId = 0 },
+	Pickaxe = { Price = 500, AssetId = 0 }, 
+	Axe = { Price = 800, AssetId = 0 },
+	Hoe = { Price = 300, AssetId = 0 },
+	Shovel = { Price = 250, AssetId = 0 },
 }
 
 local function giveTool(player, toolName)
-    if not TOOLS[toolName] then return false, "Tool not found" end
+    local toolInfo = TOOLS[toolName]
+    if not toolInfo then return false, "Tool not found" end
     
     local backpack = player:FindFirstChild("Backpack")
     if not backpack then return false, "No Backpack" end
@@ -28,6 +29,21 @@ local function giveTool(player, toolName)
     if backpack:FindFirstChild(toolName) then
         return false, "You already have this!"
     end
+    
+    -- Economy Check
+    local leaderstats = player:FindFirstChild("leaderstats")
+    local rupees = leaderstats and leaderstats:FindFirstChild("Rupees")
+    
+    if not rupees then
+        return false, "Economy System Error"
+    end
+    
+    if rupees.Value < toolInfo.Price then
+        return false, "Not enough Rupees!"
+    end
+    
+    -- Deduct Cost
+    rupees.Value -= toolInfo.Price
     
     -- Create Tool
     local tool = Instance.new("Tool")
@@ -64,7 +80,7 @@ local function giveTool(player, toolName)
     end
     
     tool.Parent = backpack
-    return true, "Bought " .. toolName
+    return true, "Bought " .. toolName .. " for ₹" .. toolInfo.Price
 end
 
 BuyToolFunction.OnServerInvoke = function(player, toolName)

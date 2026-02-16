@@ -11,11 +11,53 @@ local BuyToolFunc = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BuyTo
 local SPRING_OPTS = { dampingRatio = 0.8, frequency = 4 }
 
 local TOOLS = {
-	{ Name = "Pickaxe", Cost = 0, Icon = "rbxassetid://6031265978" }, -- Placeholder icons
-	{ Name = "Axe", Cost = 0, Icon = "rbxassetid://6031265978" },
-	{ Name = "Hoe", Cost = 0, Icon = "rbxassetid://6031265978" },
-	{ Name = "Shovel", Cost = 0, Icon = "rbxassetid://6031265978" },
+	{ Name = "Pickaxe", Cost = 500, Icon = "rbxassetid://6031265978" }, 
+	{ Name = "Axe", Cost = 800, Icon = "rbxassetid://6031265978" },
+	{ Name = "Hoe", Cost = 300, Icon = "rbxassetid://6031265978" },
+	{ Name = "Shovel", Cost = 250, Icon = "rbxassetid://6031265978" },
 }
+
+local function toIndianCurrency(n)
+	local s = tostring(n)
+	local len = #s
+	if len <= 3 then return "₹" .. s end
+	
+	local last3 = s:sub(-3)
+	local rest = s:sub(1, -4)
+	
+	local distinct = ""
+	local count = 0
+	for i = #rest, 1, -1 do
+		distinct = rest:sub(i, i) .. distinct
+		count = count + 1
+		if count == 2 and i > 1 then
+			distinct = "," .. distinct
+			count = 0
+		end
+	end
+	
+	return "₹" .. distinct .. "," .. last3
+end
+
+local function useRupees()
+    local balance, setBalance = React.useState(0)
+    
+    React.useEffect(function()
+        local player = Players.LocalPlayer
+        local leaderstats = player:WaitForChild("leaderstats", 10)
+        local rupees = leaderstats and leaderstats:WaitForChild("Rupees", 10)
+        
+        if rupees then
+            setBalance(rupees.Value)
+            local conn = rupees:GetPropertyChangedSignal("Value"):Connect(function()
+                setBalance(rupees.Value)
+            end)
+            return function() conn:Disconnect() end
+        end
+    end, {})
+    
+    return balance
+end
 
 local function InteractionPrompt(props)
     local adornee = props.Adornee
@@ -133,7 +175,7 @@ local function ShopItem(props)
              Font = Enum.Font.GothamBold,
         }),
         Cost = React.createElement("TextLabel", {
-             Text = "$" .. item.Cost,
+             Text = toIndianCurrency(item.Cost),
              Size = UDim2.new(1, 0, 0, 20),
              Position = UDim2.fromScale(0.5, 0.9),
              AnchorPoint = Vector2.new(0.5, 0.5),
@@ -151,6 +193,7 @@ local function ShopApp(props)
     local nearbyNPC = props.nearbyNPC -- logic handled in Controller
     
     local transparency, setTransparency = React.useState(1)
+    local balance = useRupees()
     
     React.useEffect(function()
         if shopOpen then
@@ -164,7 +207,7 @@ local function ShopApp(props)
         print("Buying", toolName)
         -- Call Server
         task.spawn(function() 
-            local success, msg = BuyToolFunction:InvokeServer(toolName)
+            local success, msg = BuyToolFunc:InvokeServer(toolName)
             print(success, msg)
             -- Show notification?
         end)
@@ -204,6 +247,18 @@ local function ShopApp(props)
                          TextSize = 28,
                     }),
                     
+                    Balance = React.createElement("TextLabel", {
+                        Text = "Balance: " .. toIndianCurrency(balance),
+                        Size = UDim2.new(0, 150, 0, 30),
+                        Position = UDim2.new(1, -50, 0, 10), -- Moved left to avoid CloseX
+                        AnchorPoint = Vector2.new(1, 0),
+                        BackgroundTransparency = 1,
+                        TextColor3 = Color3.fromRGB(255, 220, 100), -- Gold color
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 16,
+                        TextXAlignment = Enum.TextXAlignment.Right,
+                    }),
+                    
                     Grid = React.createElement("ScrollingFrame", {
                          Size = UDim2.new(1, -20, 1, -70),
                          Position = UDim2.fromOffset(10, 60),
@@ -241,7 +296,8 @@ local function ShopApp(props)
                         AnchorPoint = Vector2.new(1, 0),
                         BackgroundColor3 = Color3.fromRGB(200, 50, 50),
                         OnClick = closeShop,
-                    })
+                        Visible = false, -- Kept hidden as per previous state, but fixing overlap providing optionality
+                    }) 
                 })
             })
         })
@@ -249,3 +305,4 @@ local function ShopApp(props)
 end
 
 return ShopApp
+
