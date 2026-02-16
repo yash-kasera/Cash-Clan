@@ -149,6 +149,88 @@ function BuildingGenerator.Generate(buildingType: string, cframe: CFrame, parent
 		config = BuildingConfigs.ToolsShop
 	end
 
+    -- Check for Custom Asset (User Request: ToolShop)
+    local assets = game.ReplicatedStorage:FindFirstChild("Assets")
+    local townAssets = assets and assets:FindFirstChild("Town")
+    
+    -- Map Internal Name -> Asset Name
+    local assetName = buildingType
+    if buildingType == "ToolsShop" then assetName = "ToolShop" end
+    
+    local template = townAssets and townAssets:FindFirstChild(assetName)
+    
+    if template then
+        local model = template:Clone()
+        model.Name = buildingType
+        model.Parent = parent
+        
+        -- Position Model: Adjust for Bounding Box
+        local cf, size = model:GetBoundingBox()
+        -- Move up by half height so bottom sits on terrain
+        local targetCF = cframe * CFrame.new(0, size.Y / 2, 0)
+        
+        if model.PrimaryPart then
+            model:SetPrimaryPartCFrame(targetCF)
+        else
+            model:PivotTo(targetCF)
+        end
+        
+        -- Spawn Shopkeeper if ToolShop
+        if buildingType == "ToolsShop" then
+            task.spawn(function()
+                -- Find Chair -> Seat
+                -- User: "model named Chair which has a part named Seat"
+                local chair = model:FindFirstChild("Chair", true) -- Recursive search for model named Chair?
+                -- Or just search descendants
+                local seat
+                if chair then
+                    seat = chair:FindFirstChild("Seat")
+                else
+                    -- Fallback: Search any Seat
+                     for _, d in ipairs(model:GetDescendants()) do
+                        if d.Name == "Seat" and d:IsA("Seat") then
+                            seat = d
+                            break
+                        end
+                    end
+                end
+                
+                if seat then
+                    -- Create Dummy NPC
+                    pcall(function() 
+                        local npc = game.Players:CreateHumanoidModelFromUserId(1) -- Roblox Default
+                        npc.Name = "Shopkeeper"
+                        npc.Parent = model
+                        
+                        -- Tag for Client Interaction
+                        game:GetService("CollectionService"):AddTag(npc, "Shopkeeper")
+                        print("BuildingGenerator: Tagged Shopkeeper", npc)
+                        
+                        -- Ensure NPC components exist
+                        local hum = npc:FindFirstChild("Humanoid")
+                        local root = npc:FindFirstChild("HumanoidRootPart")
+                        if hum and root then
+                             -- Anchor Root to prevent physics issues
+                             root.Anchored = true
+                             root.CFrame = seat.CFrame * CFrame.new(0, 1.3, 0) -- Adjust height for sit
+                             
+                             -- Play Sit Animation (Visual only)
+                             local anim = Instance.new("Animation")
+                             anim.AnimationId = "rbxassetid://2506281703" -- R15 Sit
+                             local track = hum:LoadAnimation(anim)
+                             track.Looped = true
+                             track:Play()
+                        end
+                    end)
+                else
+                    print("Warning: Seat not found in ToolShop model")
+                end
+            end)
+        end
+        
+        return -- Skip procedural gen
+    end
+
 	local model = Instance.new("Model")
 	model.Name = buildingType
 	model.Parent = parent
